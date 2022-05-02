@@ -1,0 +1,1 @@
+# decathlon-automatic-buyer
