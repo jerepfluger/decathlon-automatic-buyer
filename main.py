@@ -2,7 +2,7 @@ import argparse
 import time
 
 from selenium import webdriver
-from selenium.webdriver import ChromeOptions
+from selenium.webdriver import FirefoxOptions
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,6 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--link', type=str, help='Link al producto que desea comprar')
 parser.add_argument('--size', type=str, help='Tamaño de la bicicleta que desea comprar. Ej: "L - 175-184CM"')
 parser.add_argument('--email', type=str, help='El mail con el cual se va loguear en su cuenta')
 parser.add_argument('--password', type=str, help='El password de su cuenta')
@@ -23,6 +24,7 @@ parser.add_argument('--card_secure_code', type=str, help='El codigo de seguridad
 
 args = parser.parse_args()
 
+LINK = args.link
 BIKE_SIZE = args.size
 EMAIL = args.email
 PASSWORD = args.password
@@ -33,25 +35,39 @@ CARD_EXPIRATION_MONTH = args.card_expiration_month
 CARD_EXPIRATION_YEAR = args.card_expiration_year
 CARD_SECURE_CODE = args.card_secure_code
 
-def start_browser():
-    options = ChromeOptions()
-    options.binary_location = "/Applications/Chromium.app/Contents/MacOS/Chromium"
-    options.add_argument('hide-scrollbars')
-    options.add_argument('disable-gpu')
-    options.add_argument('no-sandbox')
-    options.add_argument('disable-infobars')
-    options.add_argument('disable-web-security')
 
-    return webdriver.Chrome(chrome_options=options)
+def start_browser():
+    options = FirefoxOptions()
+    options.binary_location = '/Applications/Firefox.app/Contents/MacOS/firefox-bin'
+    options.add_argument('--new_instance')
+
+    firefox_profile = webdriver.FirefoxProfile()
+    #  https://developer.mozilla.org/en-US/docs/Mozilla/Preferences/Mozilla_networking_preferences
+    firefox_profile.set_preference('browser.cache.disk.enable', 'true')
+    firefox_profile.set_preference('browser.cache.memory.enable', 'true')
+    # https://github.com/mozilla/geckodriver/issues/517#issuecomment-286701282
+    firefox_profile.set_preference("browser.tabs.remote.autostart", "false")
+    firefox_profile.set_preference("browser.tabs.remote.autostart.1", "false")
+    firefox_profile.set_preference("browser.tabs.remote.autostart.2", "false")
+    firefox_profile.set_preference("browser.tabs.remote.force-enable", "false")
+    # more settings
+    firefox_profile.set_preference("dom.ipc.processCount", "1")
+    firefox_profile.set_preference("browser.sessionstore.interval", "50000000")
+    firefox_profile.set_preference("browser.sessionstore.max_resumed_crashes", "0")
+    firefox_profile.set_preference("browser.sessionstore.max_tabs_undo", "0")
+    firefox_profile.set_preference("browser.sessionstore.max_windows_undo", "0")
+    firefox_profile.set_preference("dom.popup_maximum", 0)
+    firefox_profile.set_preference("privacy.popups.showBrowserMessage", False)
+    firefox_profile.set_preference("privacy.popups.disable_from_plugins", 3)
+
+    return webdriver.Firefox(firefox_profile=firefox_profile, options=options)
 
 
 while True:
     try:
         driver = start_browser()
         driver.maximize_window()
-        driver.get('https://www.decathlon.es/es/p/bicicleta-montana-allmountain-am-100-hardtail/_/R-p-331946')
-        # driver.get("https://www.decathlon.es/es/p/bicicleta-electrica-de-montana-rockrider-ebike-st-100-27-5-azul/_/R-p-309736?mc=8560739")
-        # driver.get("https://www.decathlon.es/es/p/bicicleta-de-montana-rockrider-st-120-aluminio-monoplato-9v-27-5/_/R-p-305496")
+        driver.get(LINK)
         # Waiting for login page to be fully loaded
         try:
             WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'didomi-continue-without-agreeing')))
@@ -115,8 +131,8 @@ while True:
         store_pick_up_menu = driver.find_element(By.XPATH, './/h2[text()="Recogida en tienda"]')
         driver.execute_script("arguments[0].click();", store_pick_up_menu)
 
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, './/span[text()="Comunidad de Madrid"]')))
-        regions_selector = driver.find_element(By.XPATH, './/span[text()="Comunidad de Madrid"]')
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, './/span[contains(@class, "icon-container")]')))
+        regions_selector = driver.find_element(By.XPATH, './/span[contains(@class, "icon-container")]')
         driver.execute_script("arguments[0].click();", regions_selector)
         time.sleep(5)
         region_select = driver.find_element(By.XPATH, './/li[text()="{}"]'.format(REGION))
@@ -152,14 +168,20 @@ while True:
         accept_button = driver.find_element(By.ID, 'hidAccept')
         driver.execute_script("arguments[0].click();", accept_button)
 
-        print("Hemos llegado al final del proceso. En este momento le debería llegar una notificación de que la compra "
-              "ha sido exitosa")
-        print("Por favor confirme desde la aplicación de N26 y luego que la compra se ha completado exitosamente desde "
-              "su cuenta Decathlon")
-        end = input("Luego de la confirmación de esto, puede usted cerrar este programa. Muchas gracias")
+        break
     except Exception as ex:
         print(ex.__str__())
-        driver.close()
-        driver.quit()
+        try:
+            driver.close()
+            driver.quit()
+        except NameError:
+            pass
         if ex.__str__() == 'No availability':
             time.sleep(60)
+
+time.sleep(30)
+print("Hemos llegado al final del proceso. En este momento le debería llegar una notificación de que la compra "
+      "ha sido exitosa")
+print("Por favor confirme desde la aplicación de N26 y luego que la compra se ha completado exitosamente desde "
+      "su cuenta Decathlon")
+end = input("Luego de la confirmación de esto, puede usted cerrar este programa. Muchas gracias")
