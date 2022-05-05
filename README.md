@@ -84,13 +84,14 @@ In the command prompt type `pip3 install selenium`
 https://www.mozilla.org/es-ES/firefox/windows/
 
 ## Running the program
-In order to run the program, in the command prompt type
+You'll need to download the file `main.py`. Place it on your Desktop and on the command prompt type `cd /d %userprofile%/desktop` and press Enter
+<br>After this, in order to run the program, in the command prompt type
 ```
---link <url> --size <desired_size> --email <decathlon_email_account>  --password <decathlon_password> --region <region> --city <city> --card_number <credit_or_debit_card_number>  --card_expiration_month <expiry_month> --card_expiration_year <expiry_year> --card_secure_code <cvv>
+python3 main.py --link <url> --size <desired_size> --email <decathlon_email_account>  --password <decathlon_password> --region <region> --city <city> --card_number <credit_or_debit_card_number>  --card_expiration_month <expiry_month> --card_expiration_year <expiry_year> --card_secure_code <cvv>
 ```
 For example
 ```
---link "https://www.decathlon.es/es/p/bicicleta-montana-allmountain-am-100-hardtail/_/R-p-331946" --size "S - 150-164CM" --email "some_email@gmail.com"  --password "StrongPa$$word" --region "Euskadi" --city "City Vitoria (centro ciudad)" --card_number "3435745568760620"  --card_expiration_month "07" --card_expiration_year "2026" --card_secure_code "247"
+python3 main.py --link "https://www.decathlon.es/es/p/bicicleta-montana-allmountain-am-100-hardtail/_/R-p-331946" --size "S - 150-164CM" --email "some_email@gmail.com"  --password "StrongPa$$word" --region "Euskadi" --city "City Vitoria (centro ciudad)" --card_number "3435745568760620"  --card_expiration_month "07" --card_expiration_year "2026" --card_secure_code "247"
 ```
 
 ### General Information
